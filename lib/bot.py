@@ -2,7 +2,6 @@
 # Author: Pure-L0G1C
 # Description: Bot
 
-import ssl
 import socket
 from time import sleep
 from .config import header
