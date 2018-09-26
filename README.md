@@ -2,6 +2,9 @@
 
 A simple DOS attack tool
 
+### Requirements
+Python 3.*x*.*x*
+<br><br>
 **Attack a localhost on port 5000**
 ```sh
 $ python cyclops.py -i 127.0.0.1 -p 5000
