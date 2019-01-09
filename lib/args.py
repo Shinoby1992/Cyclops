@@ -23,26 +23,22 @@ class Args:
         parser.add_argument('-i',
                             '--ip',
                             required=True,
-                            help='the targeted ip. \
-                            Example: -i 127.0.0.1')
+                            help='the targeted ip. Example: -i 127.0.0.1')
 
         parser.add_argument('-p',
                             '--port',     
                             default=str(80),
-                            help='the targetd ports. \
-                            Example: -p 80')
+                            help='the targetd ports. Example: -p 80')
 
         parser.add_argument('-t',                      
                             '--threads',   
                             default=str(256),                  
-                            help='number of threads. \
-                            Example: -t 256') 
+                            help='number of threads. Example: -t 256') 
 
         parser.add_argument('-m',
                             '--mode',
                             default='S',
-                            help='mode of attack; (A)ggressive (S)tealthy. \
-                            Example: -m S') 
+                            help='mode of attack; (A)ggressive (S)tealthy. Example: -m S') 
 
         return parser.parse_args()
 
