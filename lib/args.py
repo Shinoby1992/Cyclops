@@ -28,7 +28,7 @@ class Args:
         parser.add_argument('-p',
                             '--port',     
                             default=str(80),
-                            help='the targetd ports. Example: -p 80')
+                            help='the targetd port. Example: -p 80')
 
         parser.add_argument('-t',                      
                             '--threads',   
