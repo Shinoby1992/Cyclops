@@ -42,8 +42,8 @@ if __name__ == '__main__':
     ip = str(input('Enter an IP address: '))
     port = int(input('Enter a port number: '))
     total_bots = input('Enter amount of bots default(256): ').strip()
-    total_bots = 256 if not total_bots or not total_bots.isdigit() else total_bots
     mode = str(input('Enter a mode (A)ggressive (S)tealthy: ')).strip()[0].upper()
+    total_bots = 256 if not total_bots or not total_bots.isdigit() else int(total_bots)
 
     system('cls' if platform.system() == 'Windows' else 'clear')
     Cyclops(ip, port, total_bots, True if mode == 'A' else False).start()
